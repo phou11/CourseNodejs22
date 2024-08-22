@@ -17,13 +17,44 @@ export const checkEmail = async (email) => {
         }
     });
 };
+export const VerifyRefreshToken = async (refresh) => {
+
+    return new Promise(async (resovle, reject) => {
+      try {
+        jwt.verify(refresh, SECREAT_KEY_REFRESH.toString(), async (err, decode) => {
+          if (err) reject(err);
+          console.log(decode.id);
+          const decript = CryptoJS.AES.decrypt(decode.id, SECREAT_KEY_REFRESH).toString(
+            CryptoJS.enc.Utf8
+          );
+          const checkUuid = "Select * from user where uuid=?";
+          connected.query(checkUuid, decript, async (error, result) => {
+            if (error) reject(error);
+            if (!result[0]) reject(EMessage.Unauthorized);
+            const data = {
+              id: result[0]["uuid"],
+            };
+            const token = await GenerateToken(data);
+            if (!token) reject("Error Genpassword");
+            resovle(token);
+          });
+        });
+      } catch (error) {
+        console.log(error);
+        reject(error);
+      }
+    });
+  };
 export const verifyToken = async (token) => {
     return new Promise(async (resolve, reject) => {
         try {
             jwt.verify(token, SECREAT_KEY.toString(), async (err, decode) => {
                 if (err) reject(err);
                 console.log(decode);
-                const decript = CryptoJS.AES.decrypt(decode.id, SECREAT_KEY).toString(CryptoJS.enc.enc.Utf8);
+                // const decript = CryptoJS.AES.decrypt(decode.id, SECREAT_KEY).toString(CryptoJS.enc.Utf8);
+                const decript = CryptoJS.AES.decrypt(decode.id, SECREAT_KEY).toString(
+                    CryptoJS.enc.Utf8
+                  );
                 const checkUuid = "Select * from user where uuid=?";
                 connected.query(checkUuid, decript, (error, result) => {
                     if (error) reject(error);
@@ -36,8 +67,8 @@ export const verifyToken = async (token) => {
             console.log(error);
             reject(error);
         }
-    })
-}
+    });
+};
 export const GenerateToken = async (data) => {
     return new Promise(async (resolve, reject) => {
         try {

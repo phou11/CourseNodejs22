@@ -4,7 +4,7 @@ import { verifyToken } from "../service/service.js";
 
 export const auth = async (req, res, next) => {
     try {
-        const headeer = req.headeers['authorization'];
+        const headeer = req.headers['authorization'];
         if (!headeer) {
             return SendError400(res, EMessage.BadRequest + "token");
         }
@@ -14,6 +14,7 @@ export const auth = async (req, res, next) => {
         req.user = user.uuid
         next()
     } catch (error) {
+        console.log(error);
         return SendError(res, 500, EMessage.ServerError, error)
     }
 }

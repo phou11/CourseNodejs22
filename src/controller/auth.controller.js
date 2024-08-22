@@ -4,7 +4,7 @@ import { SendCreate, SendError, SendError400, SendSuccess } from "../service/res
 import { validateData } from "../service/validate.js";
 import CryptoJS from "crypto-js";
 import { v4 as uuidv4 } from "uuid";
-import { GenerateToken } from "../service/service.js";
+import { GenerateToken, VerifyRefreshToken } from "../service/service.js";
 import { EMessage, ROLE, SMessage } from "../service/message.js";
 export default class AuthController {
   static async getAll(req, res) {
@@ -86,18 +86,23 @@ export default class AuthController {
           return SendError(res, 404, EMessage.IsMatch);
         }
         const update = "update user set password=? where uuid=?";
+        const genPassword = CryptoJS.AES.encrypt(
+          newPassword,
+          SECREAT_KEY
+        ).toString();
         connected.query(
           update,
           [newPassword, result[0]["uuid"]],
           (error, result) => {
             if (error) return SendError(res, 404, EMessage.ErrorUpdate, error);
             console.log(result[0]);
-            if(!result[0]) return SendError(res,404,EMessage.ErrorUpdate);
+
             return SendSuccess(res, SMessage.Update);
           }
         );
       });
     } catch (error) {
+      console.log(error);
       return SendError(res, 500, EMessage.ServerError, error);
     }
   }
@@ -139,6 +144,20 @@ export default class AuthController {
       return SendError(res, 500, EMessage.ServerError, error);
     }
   }
+
+  static async refreshToken(req, res) {
+    try {
+      const { refreshToken } = req.body;
+      if (!refreshToken) return SendError400(res, EMessage.BadRequest + "refreshToken");
+      const verify = await VerifyRefreshToken(refreshToken);
+      if (!verify) return SendError(res, 404, EMessage.NotFound);
+      return SendSuccess(res, EMessage.Update, verify);
+
+    } catch (error) {
+      return SendError(res, 500, EMessage.ServerError, error);
+    }
+  }
+
   static async register(req, res) {
     try {
       const { username, email, phoneNumber, password } = req.body;
