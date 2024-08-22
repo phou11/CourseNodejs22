@@ -83,9 +83,9 @@ export default class CategoryController {
     try {
       const cUuid = req.params.cUuid;
       if (!cUuid) return SendError400(res, EMessage.BadRequest + "cUuid");
-      const checkcategory = "select * from category where cUuid";
+      const checkcategory = "select * from category where cUuid=?";
       connected.query(checkcategory,cUuid,(error,result)=>{
-        if(error) return SendError400(res,EMessage.NotFound + err);
+        if(error) return SendError400(res,EMessage.NotFound + error);
         if(!result[0]) return SendError(res,404,EMessage.NotFound + "id");
       const mysql = "delete from category where cUuid=?";
       connected.query(mysql, cUuid, (err) => {
